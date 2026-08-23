@@ -117,10 +117,10 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 <body>
 
 <script>
-// OpenRouter API Key & Free Llama 3.3 70B Model
+// OpenRouter API Configuration (100% Free Gemini Flash Model)
 const CONFIG = {
   OPENROUTER_API_KEY: atob('c2stb3ItdjEtMjcwZGU5NWRkOGJhYzI2NzFhZWFkZjQ2ZDRhMDg4ODk0ZDA0MWRjMjMwNmYxOWQ3NDQwNTJhOGRhNTQyYTI2MQ=='),
-  MODEL: 'meta-llama/llama-3.3-70b-instruct:free'
+  MODEL: 'google/gemini-2.0-flash-exp:free'
 };
 </script>
 
@@ -131,7 +131,7 @@ const CONFIG = {
       AI Content Writer Pro
     </div>
     <div class="header-right">
-      <div class="model-badge">model / <span>Llama 3.3 70B (Free)</span></div>
+      <div class="model-badge">model / <span>Gemini 2.0 Flash (Free)</span></div>
     </div>
   </header>
 
@@ -222,7 +222,7 @@ const CONFIG = {
           <div class="placeholder-text">Select a content type, enter your topic,<br>and hit Generate.</div>
         </div>
         <div class="loading-state" id="loadingState">
-          <div style="font-size:13px">Generating content with Llama 3.3 70B...</div>
+          <div style="font-size:13px">Generating content with AI...</div>
           <div class="loading-bar"><div class="loading-bar-fill"></div></div>
         </div>
         <div id="outputCard" style="display:none"></div>
