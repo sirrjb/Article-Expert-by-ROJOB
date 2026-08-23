@@ -15,6 +15,7 @@
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
 input,select,textarea,button{font-family:'Inter',sans-serif;}
 
+/* APP */
 #app{display:flex;flex-direction:column;height:100vh;}
 header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
 .logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;}
@@ -25,6 +26,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 
 .main{display:flex;flex:1;overflow:hidden;height:calc(100vh - 56px);}
 
+/* SIDEBAR */
 .sidebar{width:290px;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;flex-shrink:0;}
 .sidebar-section{padding:18px 16px;border-bottom:1px solid var(--border);}
 .section-label{font-size:10px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
@@ -42,6 +44,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .tone-btn:hover{border-color:var(--accent);color:var(--text);}
 .tone-btn.active{border-color:var(--accent);background:rgba(124,106,255,0.12);color:var(--accent2);}
 
+/* CONTENT */
 .content-area{flex:1;display:flex;flex-direction:column;overflow:hidden;}
 .toolbar{padding:14px 22px;border-bottom:1px solid var(--border);background:var(--surface);display:flex;align-items:center;}
 .toolbar-title{font-size:14px;font-weight:600;flex:1;}
@@ -114,14 +117,10 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 <body>
 
 <script>
+// Groq Configuration
 const CONFIG = {
-  OPENROUTER_API_KEY: atob('c2stb3ItdjEtMjcwZGU5NWRkOGJhYzI2NzFhZWFkZjQ2ZDRhMDg4ODk0ZDA0MWRjMjMwNmYxOWQ3NDQwNTJhOGRhNTQyYTI2MQ=='),
-  MODELS: [
-    'deepseek/deepseek-chat:free',
-    'deepseek/deepseek-r1:free',
-    'mistralai/mistral-7b-instruct:free',
-    'qwen/qwen-2.5-7b-instruct:free'
-  ]
+  GROQ_API_KEY: atob('Z3NrX20wSm1oekY4UTd3SEtManhtWG8wV0dkeXJGWStWWTI0dmc1Y25yN1BOMTliaFd3R2QwTA=='),
+  MODEL: 'llama-3.3-70b-versatile'
 };
 </script>
 
@@ -132,7 +131,7 @@ const CONFIG = {
       AI Content Writer Pro
     </div>
     <div class="header-right">
-      <div class="model-badge">engine / <span>Free Auto-Fallback</span></div>
+      <div class="model-badge">groq / <span>Llama 3.3 70B</span></div>
     </div>
   </header>
 
@@ -223,7 +222,7 @@ const CONFIG = {
           <div class="placeholder-text">Select a content type, enter your topic,<br>and hit Generate.</div>
         </div>
         <div class="loading-state" id="loadingState">
-          <div style="font-size:13px">Generating content with AI...</div>
+          <div style="font-size:13px">Generating content with Groq...</div>
           <div class="loading-bar"><div class="loading-bar-fill"></div></div>
         </div>
         <div id="outputCard" style="display:none"></div>
@@ -386,43 +385,6 @@ Make them specific, click-worthy, and SEO-friendly.`
   return p[currentType];
 }
 
-async function requestWithFallback(prompt) {
-  let lastError = null;
-  for (const model of CONFIG.MODELS) {
-    try {
-      const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${CONFIG.OPENROUTER_API_KEY}`,
-          'HTTP-Referer': window.location.origin,
-          'X-Title': 'AI Content Writer Pro'
-        },
-        body: JSON.stringify({
-          model: model,
-          messages: [{ role: 'user', content: prompt }],
-          temperature: 0.7
-        })
-      });
-
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson.error?.message || `Status: ${res.status}`);
-      }
-
-      const data = await res.json();
-      let content = data.choices[0]?.message?.content;
-      if (content) {
-        return content.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
-      }
-    } catch (err) {
-      lastError = err;
-      continue;
-    }
-  }
-  throw lastError || new Error('All free endpoints are temporarily busy.');
-}
-
 async function generate() {
   const topic = document.getElementById('topicInput').value.trim();
   if (!topic) { showToast('⚠ Enter a topic first', 'error'); return; }
@@ -437,7 +399,27 @@ async function generate() {
   loading.classList.add('visible');
 
   try {
-    const content = await requestWithFallback(buildPrompt());
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${CONFIG.GROQ_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: CONFIG.MODEL,
+        messages: [{ role: 'user', content: buildPrompt() }],
+        max_tokens: 4096,
+        temperature: 0.7
+      })
+    });
+
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      throw new Error(e.error?.message || `Error ${res.status}: Request failed`);
+    }
+
+    const data = await res.json();
+    let content = data.choices[0]?.message?.content || '';
 
     loading.classList.remove('visible');
     outCard.style.display = 'block';
