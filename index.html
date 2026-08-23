@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Content Writer Pro</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #1a1a24;
+    --border: #2a2a38;
+    --accent: #7c6aff;
+    --accent2: #a78bfa;
+    --text: #e8e8f0;
+    --muted: #6b6b85;
+    --success: #34d399;
+    --error: #f87171;
+    --warning: #fbbf24;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: -0.3px;
+  }
+  .logo-icon {
+    width: 28px; height: 28px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+  .model-badge {
+    font-size: 11px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 3px 10px;
+    border-radius: 20px;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .model-badge span { color: var(--accent2); }
+
+  /* MAIN LAYOUT */
+  .main {
+    display: flex;
+    flex: 1;
+    height: calc(100vh - 56px);
+    overflow: hidden;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 300px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar-section {
+    padding: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar-section:last-child { border-bottom: none; flex: 1; }
+
+  .section-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  /* API KEY */
+  .api-row {
+    display: flex;
+    gap: 8px;
+  }
+  .api-status {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--error);
+    margin-top: 14px;
+    flex-shrink: 0;
+    transition: background 0.3s;
+  }
+  .api-status.ok { background: var(--success); }
+
+  /* CONTENT TYPES */
+  .content-types {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .type-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 400;
+    text-align: left;
+    width: 100%;
+  }
+  .type-btn:hover { background: var(--surface2); }
+  .type-btn.active {
+    background: rgba(124,106,255,0.12);
+    border-color: rgba(124,106,255,0.3);
+    color: var(--accent2);
+  }
+  .type-icon {
+    font-size: 16px;
+    width: 24px;
+    text-align: center;
+  }
+  .type-info { flex: 1; }
+  .type-name { font-weight: 500; }
+  .type-desc { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .type-badge {
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    background: rgba(124,106,255,0.15);
+    color: var(--accent2);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  /* TONE SELECTOR */
+  .tone-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .tone-btn {
+    padding: 8px;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--muted);
+    font-size: 12px;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+  }
+  .tone-btn:hover { border-color: var(--accent); color: var(--text); }
+  .tone-btn.active {
+    border-color: var(--accent);
+    background: rgba(124,106,255,0.12);
+    color: var(--accent2);
+  }
+
+  /* MODEL SELECTOR */
+  .model-select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    outline: none;
+  }
+  .model-select:focus { border-color: var(--accent); }
+
+  /* CONTENT AREA */
+  .content-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* TOOLBAR */
+  .toolbar {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .toolbar-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    flex: 1;
+  }
+  .toolbar-title span { color: var(--accent2); }
+
+  /* INPUT ZONE */
+  .input-zone {
+    padding: 20px 24px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .input-row {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .topic-input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    resize: none;
+    outline: none;
+    transition: border-color 0.15s;
+    min-height: 80px;
+    line-height: 1.5;
+  }
+  .topic-input::placeholder { color: var(--muted); }
+  .topic-input:focus { border-color: var(--accent); }
+
+  .extra-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .field-group { display: flex; flex-direction: column; gap: 5px; }
+  .field-label { font-size: 11px; color: var(--muted); font-weight: 500; }
+  .field-input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    outline: none;
+  }
+  .field-input:focus { border-color: var(--accent); }
+
+  /* GENERATE BUTTON */
+  .gen-btn {
+    padding: 12px 28px;
+    background: linear-gradient(135deg, var(--accent), #9d7dff);
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+    align-self: flex-end;
+  }
+  .gen-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(124,106,255,0.3);
+  }
+  .gen-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+  .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+  .gen-btn.loading .spinner { display: block; }
+  .gen-btn.loading .btn-text { display: none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* OUTPUT */
+  .output-zone {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    background: var(--bg);
+  }
+
+  .output-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 16px;
+    color: var(--muted);
+  }
+  .placeholder-icon { font-size: 48px; opacity: 0.3; }
+  .placeholder-text { font-size: 14px; text-align: center; line-height: 1.6; }
+
+  .output-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .output-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface2);
+  }
+  .output-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .word-count {
+    background: rgba(124,106,255,0.12);
+    color: var(--accent2);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .output-actions {
+    display: flex;
+    gap: 8px;
+  }
+  .action-btn {
+    padding: 6px 14px;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .action-btn:hover { border-color: var(--accent); color: var(--accent2); }
+  .action-btn.copied { color: var(--success); border-color: var(--success); }
+
+  .output-content {
+    padding: 24px;
+    line-height: 1.8;
+    font-size: 15px;
+    color: var(--text);
+    white-space: pre-wrap;
+    font-family: 'Inter', sans-serif;
+  }
+  .output-content h1, .output-content h2, .output-content h3 {
+    color: #fff;
+    margin: 20px 0 10px;
+    line-height: 1.3;
+  }
+  .output-content h1 { font-size: 22px; }
+  .output-content h2 { font-size: 18px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+  .output-content h3 { font-size: 15px; color: var(--accent2); }
+  .output-content strong { color: #fff; }
+  .output-content p { margin-bottom: 14px; }
+  .output-content ul, .output-content ol { margin: 10px 0 14px 20px; }
+  .output-content li { margin-bottom: 6px; }
+
+  /* META OUTPUT CARDS */
+  .meta-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px;
+  }
+  .meta-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .meta-item-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--accent2);
+    margin-bottom: 8px;
+  }
+  .meta-item-value {
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .meta-item-value.title { font-weight: 600; font-size: 15px; }
+  .char-count {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+  .char-count.warn { color: var(--warning); }
+  .char-count.over { color: var(--error); }
+
+  /* TITLE LIST */
+  .title-list { padding: 20px; display: flex; flex-direction: column; gap: 8px; }
+  .title-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    transition: border-color 0.15s;
+    cursor: pointer;
+  }
+  .title-item:hover { border-color: var(--accent); }
+  .title-num {
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent2);
+    width: 20px;
+    flex-shrink: 0;
+  }
+  .title-text { font-size: 14px; flex: 1; }
+  .title-copy { font-size: 11px; color: var(--muted); }
+
+  /* LOADING STATE */
+  .loading-state {
+    padding: 40px;
+    text-align: center;
+    color: var(--muted);
+    display: none;
+  }
+  .loading-state.visible { display: block; }
+  .loading-bar {
+    width: 100%;
+    height: 2px;
+    background: var(--surface2);
+    border-radius: 1px;
+    overflow: hidden;
+    margin-top: 16px;
+  }
+  .loading-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    width: 30%;
+    border-radius: 1px;
+    animation: loading 1.5s ease-in-out infinite;
+  }
+  @keyframes loading {
+    0% { margin-left: -30%; }
+    100% { margin-left: 100%; }
+  }
+
+  /* FORM */
+  input, select, textarea { box-sizing: border-box; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 18px;
+    font-size: 13px;
+    z-index: 999;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { border-color: var(--success); color: var(--success); }
+  .toast.error { border-color: var(--error); color: var(--error); }
+
+  @media (max-width: 768px) {
+    .sidebar { width: 260px; }
+    .extra-fields { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">✦</div>
+    AI Content Writer Pro
+  </div>
+  <div class="model-badge">groq / <span id="currentModelBadge">compound-beta</span></div>
+</header>
+
+<div class="main">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <!-- API KEY -->
+    <div class="sidebar-section">
+      <div class="section-label">Groq API Key</div>
+      <div class="api-row">
+        <input type="password" class="field-input" id="apiKey" placeholder="gsk_..." style="flex:1;"
+          oninput="saveApiKey(this.value)">
+        <div class="api-status" id="apiStatus"></div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px;">
+        Saved in browser. <a href="https://console.groq.com/keys" target="_blank" style="color:var(--accent2);">Get key →</a>
+      </div>
+    </div>
+
+    <!-- MODEL -->
+    <div class="sidebar-section">
+      <div class="section-label">Model</div>
+      <select class="model-select" id="modelSelect" onchange="updateModelBadge()">
+        <option value="compound-beta">compound-beta (web search)</option>
+        <option value="compound-beta-mini">compound-beta-mini (fast)</option>
+        <option value="meta-llama/llama-4-maverick-17b-128e-instruct">Llama 4 Maverick</option>
+        <option value="meta-llama/llama-4-scout-17b-16e-instruct">Llama 4 Scout</option>
+        <option value="llama-3.3-70b-versatile">Llama 3.3 70B</option>
+      </select>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px;">
+        compound-beta = real web research built-in
+      </div>
+    </div>
+
+    <!-- CONTENT TYPES -->
+    <div class="sidebar-section">
+      <div class="section-label">Content Type</div>
+      <div class="content-types">
+        <button class="type-btn active" data-type="blog" onclick="selectType(this)">
+          <span class="type-icon">📝</span>
+          <div class="type-info">
+            <div class="type-name">Blog Post</div>
+            <div class="type-desc">2000+ words, SEO ready</div>
+          </div>
+          <span class="type-badge">2K+</span>
+        </button>
+        <button class="type-btn" data-type="longform" onclick="selectType(this)">
+          <span class="type-icon">📖</span>
+          <div class="type-info">
+            <div class="type-name">Long Form Article</div>
+            <div class="type-desc">Deep research, 3000+ words</div>
+          </div>
+          <span class="type-badge">3K+</span>
+        </button>
+        <button class="type-btn" data-type="product" onclick="selectType(this)">
+          <span class="type-icon">🛒</span>
+          <div class="type-info">
+            <div class="type-name">Product Description</div>
+            <div class="type-desc">Benefits-focused copy</div>
+          </div>
+        </button>
+        <button class="type-btn" data-type="meta" onclick="selectType(this)">
+          <span class="type-icon">🔍</span>
+          <div class="type-info">
+            <div class="type-name">Meta Title + Description</div>
+            <div class="type-desc">SEO optimized snippets</div>
+          </div>
+        </button>
+        <button class="type-btn" data-type="titles" onclick="selectType(this)">
+          <span class="type-icon">💡</span>
+          <div class="type-info">
+            <div class="type-name">Title Generator</div>
+            <div class="type-desc">10 headline options</div>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <!-- TONE -->
+    <div class="sidebar-section">
+      <div class="section-label">Tone</div>
+      <div class="tone-grid">
+        <button class="tone-btn active" data-tone="informative" onclick="selectTone(this)">Informative</button>
+        <button class="tone-btn" data-tone="promotional" onclick="selectTone(this)">Promotional</button>
+        <button class="tone-btn" data-tone="conversational" onclick="selectTone(this)">Conversational</button>
+        <button class="tone-btn" data-tone="professional" onclick="selectTone(this)">Professional</button>
+        <button class="tone-btn" data-tone="persuasive" onclick="selectTone(this)">Persuasive</button>
+        <button class="tone-btn" data-tone="neutral" onclick="selectTone(this)">Neutral</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- CONTENT AREA -->
+  <div class="content-area">
+    <!-- TOOLBAR -->
+    <div class="toolbar">
+      <div class="toolbar-title" id="toolbarTitle">Blog Post — <span>2000+ words with SEO structure</span></div>
+    </div>
+
+    <!-- INPUT ZONE -->
+    <div class="input-zone">
+      <textarea class="topic-input" id="topicInput" rows="3"
+        placeholder="Enter your topic, keyword, or product name..."></textarea>
+
+      <div class="extra-fields" id="extraFields">
+        <div class="field-group" id="keywordsField">
+          <div class="field-label">Target Keywords (optional)</div>
+          <input type="text" class="field-input" id="keywords" placeholder="e.g. best VPN for streaming, fast VPN">
+        </div>
+        <div class="field-group" id="audienceField">
+          <div class="field-label">Target Audience (optional)</div>
+          <input type="text" class="field-input" id="audience" placeholder="e.g. US adults, tech beginners">
+        </div>
+        <div class="field-group" id="productNameField" style="display:none">
+          <div class="field-label">Product Name</div>
+          <input type="text" class="field-input" id="productName" placeholder="e.g. NordVPN, Hostinger">
+        </div>
+        <div class="field-group" id="priceField" style="display:none">
+          <div class="field-label">Price / Offer</div>
+          <input type="text" class="field-input" id="price" placeholder="e.g. $3.99/mo, 63% OFF">
+        </div>
+        <div class="field-group" id="urlField" style="display:none">
+          <div class="field-label">Target URL (for meta)</div>
+          <input type="text" class="field-input" id="targetUrl" placeholder="e.g. yoursite.com/page">
+        </div>
+      </div>
+
+      <div class="input-row" style="justify-content:flex-end">
+        <button class="gen-btn" id="genBtn" onclick="generate()">
+          <div class="spinner"></div>
+          <span class="btn-text">✦ Generate</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- OUTPUT ZONE -->
+    <div class="output-zone" id="outputZone">
+      <div class="output-placeholder" id="placeholder">
+        <div class="placeholder-icon">✦</div>
+        <div class="placeholder-text">
+          Select a content type, enter your topic,<br>and hit Generate to create content.
+        </div>
+      </div>
+
+      <div class="loading-state" id="loadingState">
+        <div style="font-size:13px">Generating content with AI research...</div>
+        <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+      </div>
+
+      <div id="outputCard" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// STATE
+let currentType = 'blog';
+let currentTone = 'informative';
+
+// INIT
+document.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('groq_api_key');
+  if (saved) {
+    document.getElementById('apiKey').value = saved;
+    document.getElementById('apiStatus').classList.add('ok');
+  }
+});
+
+// API KEY
+function saveApiKey(val) {
+  if (val.startsWith('gsk_') && val.length > 20) {
+    localStorage.setItem('groq_api_key', val);
+    document.getElementById('apiStatus').classList.add('ok');
+  } else {
+    document.getElementById('apiStatus').classList.remove('ok');
+  }
+}
+
+// MODEL BADGE
+function updateModelBadge() {
+  const sel = document.getElementById('modelSelect');
+  const val = sel.value.split('/').pop();
+  document.getElementById('currentModelBadge').textContent = val;
+}
+
+// CONTENT TYPE
+function selectType(btn) {
+  document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentType = btn.dataset.type;
+  updateUI();
+}
+
+// TONE
+function selectTone(btn) {
+  document.querySelectorAll('.tone-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentTone = btn.dataset.tone;
+}
+
+// UPDATE UI
+function updateUI() {
+  const titles = {
+    blog: 'Blog Post — <span>2000+ words with SEO structure</span>',
+    longform: 'Long Form Article — <span>Deep research, 3000+ words</span>',
+    product: 'Product Description — <span>Benefit-focused, conversion-optimized</span>',
+    meta: 'Meta Title + Description — <span>SEO snippets for search results</span>',
+    titles: 'Title Generator — <span>10 high-CTR headline options</span>'
+  };
+  document.getElementById('toolbarTitle').innerHTML = titles[currentType];
+
+  const placeholders = {
+    blog: 'Enter blog topic or keyword, e.g. "Best VPN for streaming in 2025"',
+    longform: 'Enter article topic for deep research, e.g. "How AI is changing healthcare"',
+    product: 'Describe the product or enter its name, e.g. "NordVPN — fast VPN for privacy"',
+    meta: 'Enter page topic or URL content, e.g. "Affiliate review of NordVPN"',
+    titles: 'Enter topic for title ideas, e.g. "make money online beginners"'
+  };
+  document.getElementById('topicInput').placeholder = placeholders[currentType];
+
+  // Show/hide extra fields
+  const kw = document.getElementById('keywordsField');
+  const au = document.getElementById('audienceField');
+  const pn = document.getElementById('productNameField');
+  const pr = document.getElementById('priceField');
+  const ur = document.getElementById('urlField');
+
+  kw.style.display = 'flex';
+  au.style.display = 'flex';
+  pn.style.display = 'none';
+  pr.style.display = 'none';
+  ur.style.display = 'none';
+
+  if (currentType === 'product') {
+    pn.style.display = 'flex';
+    pr.style.display = 'flex';
+  }
+  if (currentType === 'meta') {
+    ur.style.display = 'flex';
+    kw.style.display = 'flex';
+    au.style.display = 'none';
+  }
+  if (currentType === 'titles') {
+    kw.style.display = 'flex';
+    au.style.display = 'none';
+  }
+}
+
+// BUILD PROMPT
+function buildPrompt() {
+  const topic = document.getElementById('topicInput').value.trim();
+  const keywords = document.getElementById('keywords').value.trim();
+  const audience = document.getElementById('audience').value.trim();
+  const productName = document.getElementById('productName').value.trim();
+  const price = document.getElementById('price').value.trim();
+  const targetUrl = document.getElementById('targetUrl').value.trim();
+
+  const toneInstructions = {
+    informative: 'Write in an informative, educational, and trustworthy tone. Prioritize facts and value.',
+    promotional: 'Write in a compelling promotional tone. Highlight benefits, create urgency, include CTAs. Make it persuasive and conversion-focused.',
+    conversational: 'Write in a friendly, conversational tone as if talking to a friend. Relatable and engaging.',
+    professional: 'Write in a formal, professional tone. Authoritative and credible.',
+    persuasive: 'Write in a persuasive tone that convinces readers to take action. Use emotional triggers and logic.',
+    neutral: 'Write in a balanced, neutral, unbiased tone. Present all angles fairly.'
+  };
+
+  const prompts = {
+    blog: `You are an expert SEO content writer. Write a comprehensive, well-researched blog post on the following topic.
+
+Topic: ${topic}
+${keywords ? `Target Keywords: ${keywords}` : ''}
+${audience ? `Target Audience: ${audience}` : 'Target Audience: General US readers'}
+Tone: ${toneInstructions[currentTone]}
+
+Requirements:
+- Minimum 2000 words (aim for 2200-2500)
+- Include: Title (H1), Introduction, 5-7 H2 sections with H3 subsections, Conclusion, FAQ section (5 questions)
+- Naturally weave in target keywords without keyword stuffing
+- Include actionable tips, statistics, and examples where relevant
+- Write for US audience
+- Make it genuinely helpful and unique, not generic
+- Include a compelling intro hook
+- Format with proper markdown headings
+
+Begin writing the full blog post now:`,
+
+    longform: `You are a senior research journalist and content strategist. Write an in-depth, thoroughly researched long-form article.
+
+Topic: ${topic}
+${keywords ? `Focus Keywords: ${keywords}` : ''}
+${audience ? `Audience: ${audience}` : ''}
+Tone: ${toneInstructions[currentTone]}
+
+Requirements:
+- Minimum 3000 words — comprehensive and exhaustive
+- Structure: Title, Executive Summary, 7-9 major sections with subsections
+- Include: current data/statistics, expert perspectives, real-world examples, case studies, pros/cons where relevant
+- Research-backed claims with references to credible sources
+- Include a Table of Contents at the start
+- End with Key Takeaways and Next Steps
+- Write at expert level but accessible to the target audience
+
+Write the complete long-form article now:`,
+
+    product: `You are a professional copywriter specializing in high-converting product descriptions.
+
+Product Topic/Niche: ${topic}
+${productName ? `Product Name: ${productName}` : ''}
+${price ? `Price/Offer: ${price}` : ''}
+${keywords ? `Keywords: ${keywords}` : ''}
+Tone: ${toneInstructions[currentTone]}
+
+Write a complete product description package including:
+
+1. **SHORT DESCRIPTION** (50-80 words) — for product cards/listings
+2. **FULL DESCRIPTION** (300-500 words) — for product page, benefits-focused
+3. **FEATURE BULLETS** — 8-10 bullet points highlighting key features and benefits
+4. **COMPARISON SECTION** — Why choose this vs alternatives (100 words)
+5. **CTA TEXT** — 3 different call-to-action phrases
+
+Make it benefit-focused, conversion-optimized, and compelling.`,
+
+    meta: `You are an expert SEO specialist. Generate optimized meta data for the following:
+
+Page Topic: ${topic}
+${keywords ? `Target Keywords: ${keywords}` : ''}
+${targetUrl ? `URL: ${targetUrl}` : ''}
+
+Generate exactly this format — no extra text:
+
+META_TITLE_1: [title option 1, 50-60 chars]
+META_TITLE_2: [title option 2, 50-60 chars]  
+META_TITLE_3: [title option 3, 50-60 chars]
+META_DESC_1: [description 1, 150-160 chars]
+META_DESC_2: [description 2, 150-160 chars]
+META_DESC_3: [description 3, 150-160 chars]
+OG_TITLE: [Open Graph title]
+OG_DESCRIPTION: [Open Graph description, 100-200 chars]
+TWITTER_TITLE: [Twitter card title]
+TWITTER_DESC: [Twitter description]
+
+Make them compelling, keyword-rich, and click-worthy.`,
+
+    titles: `You are a viral content headline specialist. Generate 10 high-CTR title options.
+
+Topic: ${topic}
+${keywords ? `Keywords: ${keywords}` : ''}
+Tone: ${toneInstructions[currentTone]}
+
+Generate exactly 10 titles using these formats (vary them):
+- How-to titles
+- Listicle titles  
+- Question-based titles
+- Curiosity/intrigue titles
+- Benefit-driven titles
+- Numbered titles
+- Power word titles
+
+Format each as:
+1. [Title here]
+2. [Title here]
+...
+
+Make them compelling, specific, and optimized for both SEO and social sharing.`
+  };
+
+  return prompts[currentType];
+}
+
+// GENERATE
+async function generate() {
+  const apiKey = localStorage.getItem('groq_api_key') || document.getElementById('apiKey').value;
+  const topic = document.getElementById('topicInput').value.trim();
+
+  if (!apiKey || !apiKey.startsWith('gsk_')) {
+    showToast('⚠ Enter your Groq API key first', 'error');
+    return;
+  }
+  if (!topic) {
+    showToast('⚠ Enter a topic first', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('genBtn');
+  const loading = document.getElementById('loadingState');
+  const placeholder = document.getElementById('placeholder');
+  const outputCard = document.getElementById('outputCard');
+
+  btn.classList.add('loading');
+  btn.disabled = true;
+  placeholder.style.display = 'none';
+  outputCard.style.display = 'none';
+  loading.classList.add('visible');
+
+  const model = document.getElementById('modelSelect').value;
+  const prompt = buildPrompt();
+
+  try {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: model,
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 4096,
+        temperature: 0.7
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error?.message || `API Error: ${res.status}`);
+    }
+
+    const data = await res.json();
+    const content = data.choices[0].message.content;
+
+    loading.classList.remove('visible');
+    outputCard.style.display = 'block';
+
+    if (currentType === 'meta') {
+      renderMetaOutput(content);
+    } else if (currentType === 'titles') {
+      renderTitlesOutput(content);
+    } else {
+      renderContentOutput(content);
+    }
+
+    showToast('✓ Content generated!', 'success');
+
+  } catch (err) {
+    loading.classList.remove('visible');
+    placeholder.style.display = 'flex';
+    showToast('✗ ' + err.message, 'error');
+  }
+
+  btn.classList.remove('loading');
+  btn.disabled = false;
+}
+
+// RENDER: General Content
+function renderContentOutput(content) {
+  const wordCount = content.split(/\s+/).length;
+  const card = document.getElementById('outputCard');
+  card.innerHTML = `
+    <div class="output-card">
+      <div class="output-header">
+        <div class="output-meta">
+          <span>${getTypeLabel()}</span>
+          <span class="word-count">${wordCount.toLocaleString()} words</span>
+        </div>
+        <div class="output-actions">
+          <button class="action-btn" onclick="copyContent()">Copy</button>
+          <button class="action-btn" onclick="downloadContent()">Download .txt</button>
+        </div>
+      </div>
+      <div class="output-content" id="contentBody">${renderMarkdown(content)}</div>
+    </div>
+  `;
+}
+
+// RENDER: Meta
+function renderMetaOutput(content) {
+  const lines = content.split('\n').filter(l => l.trim());
+  const parsed = {};
+  lines.forEach(line => {
+    const sep = line.indexOf(':');
+    if (sep > -1) {
+      const key = line.substring(0, sep).trim();
+      const val = line.substring(sep + 1).trim();
+      parsed[key] = val;
+    }
+  });
+
+  const card = document.getElementById('outputCard');
+  let html = '<div class="meta-grid">';
+
+  const groups = [
+    { label: 'Meta Titles', keys: ['META_TITLE_1','META_TITLE_2','META_TITLE_3'] },
+    { label: 'Meta Descriptions', keys: ['META_DESC_1','META_DESC_2','META_DESC_3'] },
+    { label: 'Open Graph', keys: ['OG_TITLE','OG_DESCRIPTION'] },
+    { label: 'Twitter Card', keys: ['TWITTER_TITLE','TWITTER_DESC'] },
+  ];
+
+  groups.forEach(g => {
+    g.keys.forEach(k => {
+      if (parsed[k]) {
+        const val = parsed[k];
+        const len = val.length;
+        const isTitle = k.includes('TITLE');
+        const maxLen = isTitle ? 60 : 160;
+        const countClass = len > maxLen ? 'over' : len > maxLen * 0.85 ? 'warn' : '';
+        html += `
+          <div class="meta-item">
+            <div class="meta-item-label">${k.replace(/_/g,' ')}</div>
+            <div class="meta-item-value ${isTitle ? 'title' : ''}">${escapeHtml(val)}</div>
+            <div class="char-count ${countClass}">${len} chars${maxLen ? ` / ${maxLen} recommended` : ''}</div>
+          </div>
+        `;
+      }
+    });
+  });
+
+  if (Object.keys(parsed).length === 0) {
+    html += `<div class="output-content">${renderMarkdown(content)}</div>`;
+  }
+
+  html += '</div>';
+  card.innerHTML = `<div class="output-card">
+    <div class="output-header">
+      <div class="output-meta"><span>Meta SEO Data</span></div>
+      <div class="output-actions"><button class="action-btn" onclick="copyRaw()">Copy All</button></div>
+    </div>
+    ${html}
+  </div>`;
+
+  card._rawContent = content;
+}
+
+// RENDER: Titles
+function renderTitlesOutput(content) {
+  const lines = content.split('\n').filter(l => /^\d+\./.test(l.trim()));
+  const card = document.getElementById('outputCard');
+
+  let html = '<div class="title-list">';
+  lines.forEach((line, i) => {
+    const title = line.replace(/^\d+\.\s*/, '').trim();
+    html += `
+      <div class="title-item" onclick="copyText('${escapeAttr(title)}', this)">
+        <span class="title-num">${String(i+1).padStart(2,'0')}</span>
+        <span class="title-text">${escapeHtml(title)}</span>
+        <span class="title-copy">click to copy</span>
+      </div>
+    `;
+  });
+
+  if (lines.length === 0) {
+    html += `<div class="output-content">${renderMarkdown(content)}</div>`;
+  }
+  html += '</div>';
+
+  card.innerHTML = `<div class="output-card">
+    <div class="output-header">
+      <div class="output-meta"><span>Title Options</span><span class="word-count">${lines.length} titles</span></div>
+      <div class="output-actions"><button class="action-btn" onclick="copyAllTitles()">Copy All</button></div>
+    </div>
+    ${html}
+  </div>`;
+
+  card._rawContent = content;
+}
+
+// UTILITIES
+function getTypeLabel() {
+  const labels = { blog:'Blog Post', longform:'Long Form Article', product:'Product Description', meta:'Meta SEO', titles:'Titles' };
+  return labels[currentType] || 'Content';
+}
+
+function renderMarkdown(text) {
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/^- (.+)$/gm, '<li>$1</li>')
+    .replace(/(<li>.*<\/li>\n?)+/g, s => `<ul>${s}</ul>`)
+    .replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
+    .replace(/\n\n/g, '</p><p>')
+    .replace(/^(?!<[hulo])/gm, '')
+    ;
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escapeAttr(s) {
+  return s.replace(/'/g, "\\'").replace(/"/g,'&quot;');
+}
+
+function copyContent() {
+  const body = document.getElementById('contentBody');
+  const text = body ? body.innerText : '';
+  navigator.clipboard.writeText(text).then(() => showToast('✓ Copied!', 'success'));
+  const btn = event.target;
+  btn.textContent = 'Copied!';
+  btn.classList.add('copied');
+  setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+}
+
+function copyRaw() {
+  const card = document.getElementById('outputCard');
+  navigator.clipboard.writeText(card._rawContent || '').then(() => showToast('✓ Copied!', 'success'));
+}
+
+function copyAllTitles() {
+  const card = document.getElementById('outputCard');
+  navigator.clipboard.writeText(card._rawContent || '').then(() => showToast('✓ All titles copied!', 'success'));
+}
+
+function copyText(text, el) {
+  navigator.clipboard.writeText(text).then(() => {
+    const span = el.querySelector('.title-copy');
+    span.textContent = '✓ copied';
+    setTimeout(() => { span.textContent = 'click to copy'; }, 1500);
+    showToast('✓ Copied!', 'success');
+  });
+}
+
+function downloadContent() {
+  const body = document.getElementById('contentBody');
+  const text = body ? body.innerText : '';
+  const topic = document.getElementById('topicInput').value.substring(0,30).replace(/[^a-z0-9]/gi,'_');
+  const blob = new Blob([text], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${topic}_content.txt`;
+  a.click();
+}
+
+function showToast(msg, type) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.className = `toast ${type} show`;
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// Enter key support
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey && e.key === 'Enter') generate();
+});
+</script>
+</body>
+</html>
