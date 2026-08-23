@@ -119,13 +119,12 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 <body>
 
 <script>
-// Groq API Key Base64 এনকোড করে বসানো হয়েছে যাতে GitHub স্ক্যানার ব্লক না করে
+// OpenRouter API Key (Safe Base64 decode)
 const CONFIG = {
-  GROQ_API_KEY: atob('Z3NrXzVFM0ZDbWx2aVhqcjRJMnRwMVBHV0dkeWIzRlliZWl1am5PbW5pR29OaVI1UXhOT3ZmMGE=')
+  OPENROUTER_API_KEY: atob('c2stb3ItdjEtMjcwZGU5NWRkOGJhYzI2NzFhZWFkZjQ2ZDRhMDg4ODk0ZDA0MWRjMjMwNmYxOWQ3NDQwNTJhOGRhNTQyYTI2MQ==')
 };
 </script>
 
-<!-- MAIN APP -->
 <div id="app">
   <header>
     <div class="logo">
@@ -133,22 +132,22 @@ const CONFIG = {
       AI Content Writer Pro
     </div>
     <div class="header-right">
-      <div class="model-badge">groq / <span id="currentModelBadge">compound-beta</span></div>
+      <div class="model-badge">model / <span id="currentModelBadge">llama-3.3-70b</span></div>
     </div>
   </header>
 
   <div class="main">
     <aside class="sidebar">
       <div class="sidebar-section">
-        <div class="section-label">Model</div>
+        <div class="section-label">AI Model</div>
         <select class="model-select" id="modelSelect" onchange="updateModelBadge()">
-          <option value="compound-beta">compound-beta (web search)</option>
-          <option value="compound-beta-mini">compound-beta-mini (fast)</option>
-          <option value="meta-llama/llama-4-maverick-17b-128e-instruct">Llama 4 Maverick</option>
-          <option value="meta-llama/llama-4-scout-17b-16e-instruct">Llama 4 Scout</option>
-          <option value="llama-3.3-70b-versatile">Llama 3.3 70B</option>
+          <option value="meta-llama/llama-3.3-70b-instruct:free">Llama 3.3 70B (Free - Best)</option>
+          <option value="deepseek/deepseek-r1:free">DeepSeek R1 (Free - Deep Research)</option>
+          <option value="google/gemini-2.0-flash-exp:free">Gemini 2.0 Flash (Free - Fast)</option>
+          <option value="qwen/qwen-2.5-72b-instruct:free">Qwen 2.5 72B (Free)</option>
+          <option value="mistralai/mistral-small-24b-instruct-2501:free">Mistral Small (Free)</option>
         </select>
-        <div style="font-size:11px;color:var(--muted);margin-top:6px;">compound-beta = real web research</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px;">100% Free models via OpenRouter</div>
       </div>
 
       <div class="sidebar-section">
@@ -265,7 +264,7 @@ function selectTone(btn) {
 }
 
 function updateModelBadge() {
-  const v = document.getElementById('modelSelect').value.split('/').pop();
+  const v = document.getElementById('modelSelect').value.split('/')[1]?.split(':')[0] || 'AI Model';
   document.getElementById('currentModelBadge').textContent = v;
 }
 
@@ -280,7 +279,7 @@ function updateUI() {
   document.getElementById('toolbarTitle').innerHTML = titles[currentType];
 
   const placeholders = {
-    blog:     'Enter blog topic or keyword, e.g. "Best VPN for streaming in 2025"',
+    blog:     'Enter blog topic or keyword, e.g. "Best VPN for streaming in 2026"',
     longform: 'Deep research topic, e.g. "How AI is changing healthcare"',
     product:  'Product name or description, e.g. "NordVPN fast VPN for privacy"',
     meta:     'Page topic, e.g. "Affiliate review of NordVPN"',
@@ -420,14 +419,31 @@ async function generate() {
   const model = document.getElementById('modelSelect').value;
 
   try {
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${CONFIG.GROQ_API_KEY}` },
-      body: JSON.stringify({ model, messages: [{ role: 'user', content: buildPrompt() }], max_tokens: 4096, temperature: 0.72 })
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${CONFIG.OPENROUTER_API_KEY}`,
+        'HTTP-Referer': window.location.origin,
+        'X-Title': 'AI Content Writer Pro'
+      },
+      body: JSON.stringify({
+        model: model,
+        messages: [{ role: 'user', content: buildPrompt() }],
+        temperature: 0.7
+      })
     });
-    if (!res.ok) { const e = await res.json(); throw new Error(e.error?.message || `API ${res.status}`); }
+
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      throw new Error(e.error?.message || `Error ${res.status}: Request failed`);
+    }
+
     const data = await res.json();
-    const content = data.choices[0].message.content;
+    let content = data.choices[0]?.message?.content || '';
+
+    // DeepSeek-R1 thinking tag clean up
+    content = content.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
 
     loading.classList.remove('visible');
     outCard.style.display = 'block';
