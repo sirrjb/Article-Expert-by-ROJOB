@@ -335,21 +335,40 @@ let currentUser = null;
 const GH_BASE = `https://api.github.com/repos/${CONFIG.GITHUB_REPO}/contents/${CONFIG.USERS_FILE}`;
 
 async function ghGet() {
-  const r = await fetch(GH_BASE, {
-    headers: {
-      'Authorization': `token ${CONFIG.GITHUB_TOKEN}`,
-      'Accept': 'application/vnd.github.v3+json'
-    }
-  });
-  if (r.status === 404) return { users: [], sha: null };
-  const d = await r.json();
-  const users = JSON.parse(atob(d.content.replace(/\n/g, '')));
-  return { users, sha: d.sha };
+  try {
+    const r = await fetch(GH_BASE, {
+      headers: {
+        'Authorization': `token ${CONFIG.GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json'
+      }
+    });
+    if (r.status === 404 || !r.ok) return { users: [], sha: null };
+    const d = await r.json();
+    if (!d || !d.content) return { users: [], sha: null };
+    
+    // Decode base64 UTF-8 safely
+    const rawContent = atob(d.content.replace(/\s/g, ''));
+    const bytes = Uint8Array.from(rawContent, c => c.charCodeAt(0));
+    const decoded = new TextDecoder().decode(bytes);
+    
+    return { users: JSON.parse(decoded), sha: d.sha };
+  } catch(e) {
+    return { users: [], sha: null };
+  }
 }
 
 async function ghSave(users, sha) {
-  const body = { message: 'update users', content: btoa(JSON.stringify(users, null, 2)), branch: CONFIG.GITHUB_BRANCH };
+  const jsonString = JSON.stringify(users, null, 2);
+  const bytes = new TextEncoder().encode(jsonString);
+  const base64Content = btoa(String.fromCharCode(...bytes));
+  
+  const body = { 
+    message: 'update users', 
+    content: base64Content, 
+    branch: CONFIG.GITHUB_BRANCH 
+  };
   if (sha) body.sha = sha;
+  
   const r = await fetch(GH_BASE, {
     method: 'PUT',
     headers: {
@@ -389,10 +408,16 @@ async function doLogin() {
     const { users } = await ghGet();
     const hash = await hashPass(pass);
     const user = users.find(u => u.email === email && u.password === hash);
-    if (!user) { errEl.textContent = 'Invalid email or password.'; errEl.classList.add('show'); }
-    else { sessionStorage.setItem('cw_user', JSON.stringify(user)); launchApp(user); }
+    if (!user) { 
+      errEl.textContent = 'Invalid email or password.'; 
+      errEl.classList.add('show'); 
+    } else { 
+      sessionStorage.setItem('cw_user', JSON.stringify(user)); 
+      launchApp(user); 
+    }
   } catch(e) {
-    errEl.textContent = 'Connection error. Check config.'; errEl.classList.add('show');
+    errEl.textContent = 'Connection error. Check config.'; 
+    errEl.classList.add('show');
   }
   btn.disabled = false; btn.textContent = 'Login';
 }
